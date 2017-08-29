@@ -1,0 +1,212 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<worldsens xmlns="http://worldsens.citi.insa-lyon.fr">
+
+
+<!-- == Worldsens ===================================================== -->
+<simulation nodes="3" duration="10s" x="50" y="50" z="0"/>
+
+<!-- == Entities ====================================================== -->
+
+<!-- == PROPAGATION, INTERFERENCES and MODULATION ===================== -->
+<entity name="itu_indoor_mp" library="propagation_itu_indoor_mp">
+</entity>
+
+<entity name="none" library="interferences_none">
+</entity>
+
+<entity name="bpsk" library="modulation_bpsk">
+</entity>
+
+<!-- == RADIO and ANTENNA ============================================ -->
+<entity name="antenna_wifi" library="antenna_omnidirectionnal" >
+  <default loss="0" angle-xy="random" angle-z="random"/>
+</entity>
+
+<entity name="antenna_zigbee" library="antenna_omnidirectionnal" >
+  <default loss="0" angle-xy="random" angle-z="random"/>
+</entity>
+
+<entity name="radio_wifi" library="radio_half1d" >
+  <default sensibility="-87" dBm="20.0" channel="0" modulation="bpsk"/>
+</entity>
+
+<entity name="radio_zigbee" library="radio_802_15_4_868_bpsk" >
+  <default sensibility="-92" dBm="-3" channel="1" modulation="bpsk"/>
+</entity>
+
+<!-- == MAC ===================================================== -->
+<entity name="mac_wifi" library="mac_dcf_802_11" >
+</entity>
+
+<entity name="mac_zigbee" library="mac_802_15_4_868_bpsk_u_csma_ca" >
+</entity>
+
+<!-- == ROUTING ===================================================== -->
+
+<entity name="routing" library="routing_filestatic_multi_protocol" >
+  <init file="/home/doreidammar/routing.data"/>
+</entity>
+
+<!-- == APPLICATION ===================================================== -->
+
+<entity name="carma" library="application_carmaMultiProtocols" >
+  <default period="2s" start="0" destination="0"/>
+</entity>
+
+<!-- == MOBILITY ===================================================== -->
+
+<entity name="static" library="mobility_static" >
+  <default x="random" y="random" z="random"/>
+</entity>
+
+<!-- == BATTERY ======================================================== -->
+
+<entity name="battery" library="energy_linear" >
+  <default energy="200000000000000"/>
+</entity>
+
+<!-- == Environment ===================================================== -->
+
+<environment>
+<propagation entity="itu_indoor_mp"/>
+<interferences entity="none"/>
+<modulation entity="bpsk"/>
+</environment>
+
+<!-- == Bundle ===================================================== -->
+<bundle name="AP" worldsens="false" default="false" birth="0">
+  <mobility entity="static"/>
+  
+  <antenna entity="antenna_wifi">
+    <up entity="radio_wifi"/>
+  </antenna>
+
+  <with entity="radio_wifi">
+    <up entity="mac_wifi"/>
+    <down entity="antenna_wifi"/>
+  </with>
+
+  <with entity="mac_wifi">
+    <up entity="routing"/>
+    <down entity="radio_wifi"/>
+  </with>
+
+  <with entity="routing">
+    <up entity="carma"/>
+    <down entity="mac_wifi"/>				   
+  </with>						 
+
+  <with entity="carma">
+    <down entity="routing"/>			   
+  </with>
+
+</bundle>
+
+<bundle name="PU" worldsens="false" default="true" birth="0">
+  <mobility entity="static"/>
+  
+  <energy entity="battery"/> 
+
+  <antenna entity="antenna_wifi">			
+    <up entity="radio_wifi"/>				   
+  </antenna>
+
+  <antenna entity="antenna_zigbee">							   
+    <up entity="radio_zigbee"/>
+  </antenna>						
+
+  <with entity="radio_wifi">				
+    <up entity="mac_wifi"/>					   
+    <down entity="antenna_wifi"/>			   
+  </with>	
+
+  <with entity="radio_zigbee">					
+    <up entity="mac_zigbee"/>
+    <down entity="antenna_zigbee"/>
+  </with>
+
+  <with entity="mac_wifi">					
+    <up entity="routing"/>				   
+    <down entity="radio_wifi"/>				   
+  </with>	
+
+  <with entity="mac_zigbee">					
+     <up entity="routing"/>
+     <down entity="radio_zigbee"/>
+  </with>
+
+  <with entity="routing">
+    <up entity="carma"/>	
+    <down entity="mac_wifi"/>
+    <down entity="mac_zigbee"/> 
+  </with>
+						 
+  <with entity="carma">
+    <down entity="routing"/>			   
+  </with>						 
+
+</bundle>
+
+<bundle name="SU" worldsens="false" default="true" birth="0">
+  <mobility entity="static"/>
+  
+  <energy entity="battery"/> 
+
+  <antenna entity="antenna_wifi">			
+    <up entity="radio_wifi"/>				   
+  </antenna>
+
+  <antenna entity="antenna_zigbee">							   
+    <up entity="radio_zigbee"/>
+  </antenna>						
+
+  <with entity="radio_wifi">				
+    <up entity="mac_wifi"/>					   
+    <down entity="antenna_wifi"/>			   
+  </with>	
+
+  <with entity="radio_zigbee">					
+    <up entity="mac_zigbee"/>
+    <down entity="antenna_zigbee"/>
+  </with>
+
+  <with entity="mac_wifi">					
+    <up entity="routing"/>				   
+    <down entity="radio_wifi"/>				   
+  </with>	
+
+  <with entity="mac_zigbee">					
+     <up entity="routing"/>
+     <down entity="radio_zigbee"/>
+  </with>
+
+  <with entity="routing">
+    <up entity="carma"/>	
+    <down entity="mac_wifi"/>
+    <down entity="mac_zigbee"/> 
+  </with>						 
+
+  <with entity="carma">
+    <down entity="routing"/>			   
+  </with>
+
+</bundle>
+
+<!-- == Nodes ===================================================== -->
+
+<node id="0" as="AP">
+ <for entity="static" x="10.0" y="25.0" z="0.0"/>
+ <for entity="routing" node_protocol="1"/>
+</node> 
+
+<node id="1" as="PU">
+ <for entity="static" x="25.0" y="25.0" z="0.0"/>
+ <for entity="routing" node_protocol="0" protocol_priority="1"/>
+</node>
+
+<node id="2" as="SU">
+ <for entity="static" x="38.0" y="25.0" z="0.0"/>
+ <for entity="routing" node_protocol="0" protocol_priority="2"/>
+</node>
+
+</worldsens>
